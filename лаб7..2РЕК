@@ -1,0 +1,96 @@
+/*lab_7.2
+Перепелиця Ілона
+Лабораторна робота 7.2
+Опрацювання багатовимірних масивів рекурсивним способом
+Варіант 11*/
+#include <iostream>
+#include <iomanip>
+#include <cstdlib>
+#include <ctime>
+#include <cassert>
+
+using namespace std;
+
+// Прототипи функцій
+void CreateRow(int** a, const int rowNo, const int N, const int Low, const int High, int colNo = 0);
+void CreateRows(int** a, const int K, const int N, const int Low, const int High, int rowNo = 0);
+void PrintRow(int** a, const int rowNo, const int N, int colNo = 0);
+void PrintRows(int** a, const int K, const int N, int rowNo = 0);
+
+int MinInColRec(int** a, const int K, const int colNo, int rowNo = 1, int currentMin = 0);
+int SumMinEvenColsRec(int** a, const int K, const int N, int colNo = 0);
+void TestRec();
+
+int main() {
+    srand((unsigned)time(NULL));
+
+    // Unit-тест
+    TestRec();
+    cout << "Unit test passed successfully!\n\n";
+
+    int k = 4, n = 4;
+    int** a = new int* [k];
+    for (int i = 0; i < k; i++) a[i] = new int[n];
+
+    CreateRows(a, k, n, -10, 10);
+
+    cout << "Generated Matrix (" << k << "x" << n << "):\n";
+    PrintRows(a, k, n);
+
+    cout << "\nSum of minimum elements in even columns: "
+        << SumMinEvenColsRec(a, k, n) << endl;
+
+    for (int i = 0; i < k; i++) delete[] a[i];
+    delete[] a;
+
+    return 0;
+}
+
+// Рекурсивне створення матриці
+void CreateRow(int** a, const int rowNo, const int N, const int Low, const int High, int colNo) {
+    a[rowNo][colNo] = Low + rand() % (High - Low + 1);
+    if (colNo < N - 1) CreateRow(a, rowNo, N, Low, High, colNo + 1);
+}
+
+void CreateRows(int** a, const int K, const int N, const int Low, const int High, int rowNo) {
+    CreateRow(a, rowNo, N, Low, High);
+    if (rowNo < K - 1) CreateRows(a, K, N, Low, High, rowNo + 1);
+}
+
+// Рекурсивне виведення матриці
+void PrintRow(int** a, const int rowNo, const int N, int colNo) {
+    cout << setw(5) << a[rowNo][colNo];
+    if (colNo < N - 1) PrintRow(a, rowNo, N, colNo + 1);
+    else cout << endl;
+}
+
+void PrintRows(int** a, const int K, const int N, int rowNo) {
+    PrintRow(a, rowNo, N);
+    if (rowNo < K - 1) PrintRows(a, K, N, rowNo + 1);
+}
+
+// Пошук min елемента у стовпці (рекурсивно по рядках)
+int MinInColRec(int** a, const int K, const int colNo, int rowNo, int currentMin) {
+    if (rowNo == 1) currentMin = a[0][colNo];
+    if (rowNo >= K) return currentMin;
+    if (a[rowNo][colNo] < currentMin) currentMin = a[rowNo][colNo];
+    return MinInColRec(a, K, colNo, rowNo + 1, currentMin);
+}
+
+// Сумування min елементів по парних стовпцях (colNo = 0, 2, 4...)
+int SumMinEvenColsRec(int** a, const int K, const int N, int colNo) {
+    if (colNo >= N) return 0;
+    return MinInColRec(a, K, colNo) + SumMinEvenColsRec(a, K, N, colNo + 2);
+}
+
+// Короткий Unit-тест
+void TestRec() {
+    int k = 2, n = 3;
+    int** t = new int* [k];
+    t[0] = new int[n] {3, 5, 2};
+    t[1] = new int[n] {1, 8, 4};
+    // Парні стовпці: colNo 0 (min=1), colNo 2 (min=2). Сума = 3
+    assert(SumMinEvenColsRec(t, k, n) == 3);
+    for (int i = 0; i < k; i++) delete[] t[i];
+    delete[] t;
+}
